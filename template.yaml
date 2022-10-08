@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SAM template to try out the new AWS::Serverless::Connector resource type
+
+Resources:
+  # -- Sources and destinations -- #
+
+  ExampleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Timeout: 3
+      CodeUri: hello_world/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+
+  ExampleStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Policies:
+        - Version: '2012-10-17' 
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:ListBucket
+              Resource: '*'
+      Definition:
+        StartAt: Succeed
+        States:
+          Succeed:
+            Type: Succeed
+
+  ExampleTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: Id
+        Type: String
+
+  ExampleBucket:
+    Type: AWS::S3::Bucket
+  
+  # -- Connectors -- #
+
+  FunctionToStateMachineConnector:
+    Type: AWS::Serverless::Connector
+    Properties:
+      Source:
+        Id: ExampleFunction
+      Destination:
+        Id: ExampleStateMachine
+      Permissions:
+        - Write
+
+  FunctionToTableConnector:
+    Type: AWS::Serverless::Connector
+    Properties:
+      Source:
+        Id: ExampleFunction
+      Destination:
+        Id: ExampleTable
+      Permissions:
+        - Write
+
+  FunctionToBucketConnector:
+    Type: AWS::Serverless::Connector
+    Properties:
+      Source:
+        Id: ExampleFunction
+      Destination:
+        Id: ExampleBucket
+      Permissions:
+        - Read
